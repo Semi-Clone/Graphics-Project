@@ -11,8 +11,24 @@ public class BruteController : MonoBehaviour {
 	private enum CharacterState { IDLE = 0, WALK = 1, RUNBACK = 2, WALKLEFT = 3, WALKRIGHT = 4, RUN = 5 , JUMP = 6 , JUMPRUNNING = 7 , CROUCH = 8 , CROUCHWALKINGFORWARD = 9 , CROUCHWALKINGBACKWARDS = 10, CROUCHWALKINGLEFT = 11 , CROUCHWALKINGRIGHT = 12}; 
 	private float speed = 10.0f;
 	private float rotationSpeed = 100.0f;
+	int health = 10;
+	int damage = 5;
 
-	// Use this for initialization
+	void OnTriggerEnter(Collider other){
+		Debug.Log ("HIT");
+		if (other.gameObject.tag == "HitBox") {
+			health -= damage;
+			anim.SetBool ("takingdmg", true);
+
+			if (health == 0) {
+				anim.SetBool ("isDead", true);	
+				Debug.Log ("Dead");
+			}
+		} else {
+			anim.SetBool ("takingdmg", false);
+		}
+
+	}
 	void Start () {
 		anim = GetComponent<Animator> ();
 	}

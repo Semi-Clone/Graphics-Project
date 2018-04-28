@@ -14,8 +14,25 @@ public class Maria_script : MonoBehaviour {
     private bool jumbAttack;
 	private string prevAttack ="prevAttack";
 	private bool stand = true ;
+    public int health = 10;
+    public int damage = 5;
 
     public bool lockCursor = true;
+
+    void OnTriggerEnter(Collider other){
+		Debug.Log ("HIT");
+		if (other.gameObject.tag == "HitBox") {
+			health -= damage;
+			anim.SetBool ("hit", true);
+
+			if (health == 0) {
+				anim.SetBool ("isDead", true);	
+				Debug.Log ("Dead");
+			}
+		} else {
+			anim.SetBool ("hit", false);
+		}}
+
 
     // Use this for initialization
     void Start () {
