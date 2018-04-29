@@ -2,144 +2,113 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BruteController : MonoBehaviour {
+public class BruteController : MonoBehaviour
+{
+    private Animator animator;
+    private bool isStanding, isBlocking;
+    public float speed, hp = 100;
+    public AudioClip clip;
+    public AudioSource source;
+    public AudioClip clipswing;
+    public AudioSource sourceswing;
+    public AudioClip clipcollision;
+    public AudioSource sourcecollision;
+    public AudioClip clipdeath;
+    public AudioSource sourcedeath;
+    public int dmg = 5;
+    private bool isDead;
 
-	private Animator anim;
-	private int state;
-	private bool isCrouching;
-	private enum AttackState{BASICATTACK = 20, BLOCK = 21};
-	private enum CharacterState { IDLE = 0, WALK = 1, RUNBACK = 2, WALKLEFT = 3, WALKRIGHT = 4, RUN = 5 , JUMP = 6 , JUMPRUNNING = 7 , CROUCH = 8 , CROUCHWALKINGFORWARD = 9 , CROUCHWALKINGBACKWARDS = 10, CROUCHWALKINGLEFT = 11 , CROUCHWALKINGRIGHT = 12}; 
-	private float speed = 10.0f;
-	private float rotationSpeed = 100.0f;
-	int health = 10;
-	int damage = 5;
+    void Start()
+    {
+        source.clip = clip;
+        isDead = false;
+        sourceswing.clip = clipswing;
+        sourcedeath.clip = clipdeath;
+        sourcecollision.clip = clipcollision;
+        animator = GetComponent<Animator>();
+        isStanding = true;
+        isBlocking = false;
+    }
 
-	void OnTriggerEnter(Collider other){
-		Debug.Log ("HIT");
-		if (other.gameObject.tag == "HitBox") {
-			health -= damage;
-			anim.SetBool ("takingdmg", true);
-
-			if (health == 0) {
-				anim.SetBool ("isDead", true);	
-				Debug.Log ("Dead");
-			}
-		} else {
-			anim.SetBool ("takingdmg", false);
-		}
-
-	}
-	void Start () {
-		anim = GetComponent<Animator> ();
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		CharacterMovment ();
-
-	}
-
-	public void CharacterMovment(){
-
-		if (Input.GetKeyDown (KeyCode.W)) {
-			state = (int)CharacterState.RUN;
-		}else if (Input.GetKeyUp(KeyCode.W)) {
-
-			state = (int)CharacterState.IDLE;
-		}
-
-		if (Input.GetKeyDown (KeyCode.S)) {
-			state = (int)CharacterState.RUNBACK;
-		}else if (Input.GetKeyUp(KeyCode.S)) {
-
-			state = (int)CharacterState.IDLE;
-		}
-
-		if (Input.GetKeyDown(KeyCode.C)){
-			isCrouching = true;
-			state = (int)CharacterState.CROUCH;
-		}else if (Input.GetKeyUp(KeyCode.C)){
-			isCrouching = false;
-			state = (int)CharacterState.IDLE;
-		}
-
-		if (isCrouching == true && Input.GetKeyDown (KeyCode.W)) {
-			state = (int)CharacterState.CROUCHWALKINGFORWARD;
-		} else if (Input.GetKeyUp (KeyCode.W) && isCrouching == true) {
-			state = (int)CharacterState.CROUCH;
-		}
-
-		if (isCrouching == true && Input.GetKeyDown (KeyCode.S)) {
-			state = (int)CharacterState.CROUCHWALKINGBACKWARDS;
-		} else if (Input.GetKeyUp (KeyCode.S) && isCrouching == true) {
-			state = (int)CharacterState.CROUCH;
-		}
-
-		if (Input.GetMouseButtonUp(0)) {
-			anim.SetTrigger ("attack");
-			//state = (int)AttackState.BASICATTACK;
-		} else if (Input.GetMouseButtonDown (0)) {
-			state = (int)CharacterState.IDLE;
-		}
-
-		if (Input.GetMouseButtonDown (1)) {
-			state = (int)AttackState.BLOCK;
-		} else if (Input.GetMouseButtonUp (1)) {
-			state = (int)CharacterState.IDLE;
-		}
-			
+    void Update()
+    {
+        if (!isDead)
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                isStanding = !isStanding;
+                animator.SetBool("isStanding", isStanding);
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                isBlocking = !isBlocking;
+                animator.SetBool("block", isBlocking);
+            }
 
 
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			anim.SetTrigger ("isJumping");
-		}
+            if ((Input.GetKeyDown(KeyCode.F) || Input.GetMouseButtonDown(0)) && isStanding && !isBlocking)
+            {
+                animator.ResetTrigger("attack1");
+                animator.SetTrigger("attack1");
+                if (!sourceswing.isPlaying && !animator.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+                    sourceswing.Play();
+            }
 
-		if (Input.GetKeyDown (KeyCode.Space) && state == (int)CharacterState.RUN) {
-			state = (int)CharacterState.JUMPRUNNING;
-		} else if(Input.GetKeyUp (KeyCode.Space) && state == (int)CharacterState.JUMPRUNNING) {
-			state = (int)CharacterState.RUN;
-		}
+            float speed = Input.GetAxis("Vertical");
+            animator.SetFloat("speed", speed);
+            if (speed != 0)
+            {
+                animator.SetBool("isMoving", true);
+                if (speed > 0.3 || speed < -.03)
+                    if (!source.isPlaying && !isBlocking)
+                        source.Play();
+            }
+            else
+            {
+                animator.SetBool("isMoving", false);
+                source.Stop();
+            }
 
+            if (Input.GetKeyDown(KeyCode.Space) && isStanding)
+            {
+                animator.ResetTrigger("jump");
+                animator.SetTrigger("jump");
+            }
 
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                isBlocking = !isBlocking;
+                animator.SetBool("block", isBlocking);
+            }
 
+            transform.Rotate(new Vector3(0, Input.GetAxis("Horizontal")) * 100 * Time.deltaTime);
+        }
+        GetComponent<CharacterController>().Move(new Vector3(0, -10) * Time.deltaTime);
+    }
+    void OnTriggerEnter(Collider col)
+    {
+        if (!isDead)
+        {
+            Animator Another = col.GetComponentInParent<Animator>();
+            if (Another != null && !animator.GetCurrentAnimatorStateInfo(0).IsTag("block") && Another.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+            {
+                if (!col.gameObject.tag.Contains("brute") && col.gameObject.tag.Contains("Hitbox"))
+                {
 
+                    if (!sourcecollision.isPlaying)
+                        sourcecollision.Play();
+                    hp -= dmg;
+                    animator.Play("faceHit");
 
-
-
-		float translation = Input.GetAxis ("Vertical") * speed;
-		float rotation = Input.GetAxis ("Horizontal") * rotationSpeed;	
-		translation *= Time.deltaTime;
-		rotation *= Time.deltaTime;
-		transform.Translate (0, 0, translation);
-		transform.Rotate (0, rotation, 0);
-		if (translation != 0) {
-			//anim.SetBool ("isRunning", true);
-			anim.SetInteger ("BruteState", state);
-		} //else {
-			//anim.SetBool ("isRunning", false);
-			//	anim.SetInteger ("BruteState", state);
-		//}
-		anim.SetInteger ("BruteState", state);
-	
-	
-	}
-	/*public void Movment(){
-	
-		float translation = Input.GetAxis ("Vertical") * speed;
-		float rotation = Input.GetAxis ("Horizontal") * rotationSpeed;	
-		translation *= Time.deltaTime;
-		rotation *= Time.deltaTime;
-		transform.Translate (0, 0, translation);
-		transform.Rotate (0, rotation, 0);
-		if (translation != 0) {
-			anim.SetBool ("isRunning", true);
-		} else {
-			anim.SetBool ("isRunning", false);
-		}
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			anim.SetTrigger ("isJumping");
-		}
-	
-	
-	}*/
+                    if (hp == 0)
+                    {
+                        isDead = true;
+                        animator.SetTrigger("isDead");
+                        if (!sourcedeath.isPlaying)
+                            sourcedeath.Play();
+                    }
+                }
+            }
+        }
+    }
 }

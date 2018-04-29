@@ -2,95 +2,113 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class warriorController : MonoBehaviour {
-	private Animator animator;
-	private bool isStanding, isBlocking;
-	private string prevAttack;
-	private float speed, hp;
-	public int dmg = 5;
+public class warriorController : MonoBehaviour
+{
+    private Animator animator;
+    private bool isStanding, isBlocking;
+    public float speed, hp = 100;
+    public AudioClip clip;
+    public AudioSource source;
+    public AudioClip clipswing;
+    public AudioSource sourceswing;
+    public AudioClip clipcollision;
+    public AudioSource sourcecollision;
+    public AudioClip clipdeath;
+    public AudioSource sourcedeath;
+    public int dmg = 5;
+    private bool isDead;
+
+    void Start()
+    {
+        source.clip = clip;
+        isDead = false;
+        sourceswing.clip = clipswing;
+        sourcedeath.clip = clipdeath;
+        sourcecollision.clip = clipcollision;
+        animator = GetComponent<Animator>();
+        isStanding = true;
+        isBlocking = false;
+    }
+
+    void Update()
+    {
+        if (!isDead)
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                isStanding = !isStanding;
+                animator.SetBool("isStanding", isStanding);
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                isBlocking = !isBlocking;
+                animator.SetBool("block", isBlocking);
+            }
 
 
-	void OnTriggerEnter(Collider col){
-	
-		if (col.gameObject.tag == "HitBox") {
-		
-			hp -= dmg;
-			animator.SetBool ("faceHit", true);
+            if ((Input.GetKeyDown(KeyCode.F) || Input.GetMouseButtonDown(0)) && isStanding && !isBlocking)
+            {
+                animator.ResetTrigger("attack1");
+                animator.SetTrigger("attack1");
+                if (!sourceswing.isPlaying && !animator.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+                    sourceswing.Play();
+            }
 
-			if (hp == 0) {
-			
-				animator.SetBool ("isDead", true);
-			}
-		} else {
-			animator.SetBool ("isDead", false);
-		}
-	
-	
-	
-	
-	}
+            float speed = Input.GetAxis("Vertical");
+            animator.SetFloat("speed", speed);
+            if (speed != 0)
+            {
+                animator.SetBool("isMoving", true);
+                if (speed > 0.3 || speed < -.03)
+                    if (!source.isPlaying && !isBlocking)
+                        source.Play();
+            }
+            else
+            {
+                animator.SetBool("isMoving", false);
+                source.Stop();
+            }
 
-	void Start () {
-		animator = GetComponent<Animator> ();
-		isStanding = true;
-		isBlocking = false; 
-		speed = animator.GetFloat ("speed");
-		hp = animator.GetFloat ("hp");
-	}
+            if (Input.GetKeyDown(KeyCode.Space) && isStanding)
+            {
+                animator.ResetTrigger("jump");
+                animator.SetTrigger("jump");
+            }
 
-	void Update () {
-		if (Input.GetKeyDown (KeyCode.C)) {
-			isStanding = !isStanding;
-			animator.SetBool ("isStanding", isStanding);
-		}
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                isBlocking = !isBlocking;
+                animator.SetBool("block", isBlocking);
+            }
 
-		if (Input.GetKeyDown (KeyCode.F) && isStanding) {
-			animator.SetBool (prevAttack, false);
-			prevAttack = "attack" + Random.Range (1, 11);
-			animator.SetBool (prevAttack, true);
-		} 
+            transform.Rotate(new Vector3(0, Input.GetAxis("Horizontal")) * 100 * Time.deltaTime);
+        }
+        GetComponent<CharacterController>().Move(new Vector3(0, -10) * Time.deltaTime);
+    }
+    void OnTriggerEnter(Collider col)
+    {
+        if (!isDead)
+        {
+            Animator Another = col.GetComponentInParent<Animator>();
+            if (Another != null && !animator.GetCurrentAnimatorStateInfo(0).IsTag("block") && Another.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+            {
+                if (!col.gameObject.tag.Contains("warrior") && col.gameObject.tag.Contains("Hitbox"))
+                {
 
-		if(Input.GetKeyUp(KeyCode.F))
-			animator.SetBool (prevAttack, false);
-		
-		if (Input.GetKey (KeyCode.W)) {
-			if (speed < 1f)
-				speed += 0.1f;
-			animator.SetFloat ("speed", speed);
-			rotate ();
-		} else if (Input.GetKey (KeyCode.S)) {
-			if (speed > -1f)
-				speed -= 0.1f;
-			animator.SetFloat ("speed", speed);
-			rotate ();
-		} else {
-			if (speed > 0.02f) {
-				speed -= 0.02f;
-				animator.SetFloat ("speed", speed);
-			} else if (speed <= -0.02f) {
-				speed += 0.02f;
-				animator.SetFloat ("speed", speed);
-			}
-		}
+                    if (!sourcecollision.isPlaying)
+                        sourcecollision.Play();
+                    hp -= dmg;
+                    animator.Play("faceHit");
 
-		if (Input.GetKeyDown (KeyCode.Space) && isStanding) {
-			animator.SetBool ("jump", true);
-		} else {
-			animator.SetBool ("jump", false);
-		}
-		if (Input.GetKeyDown (KeyCode.X)) {
-			isBlocking = !isBlocking;
-			animator.SetBool ("block", isBlocking);
-		}
-	}
-
-	private void rotate(){
-		if (Input.GetKey (KeyCode.D)) {
-			transform.Rotate (new Vector3(0,100) * Time.deltaTime);
-		} else if (Input.GetKey (KeyCode.A)) {
-
-			transform.Rotate (new Vector3(0,-100) * Time.deltaTime);
-		}
-	}
-			
+                    if (hp == 0)
+                    {
+                        isDead = true;
+                        animator.SetTrigger("isDead");
+                        if (!sourcedeath.isPlaying)
+                            sourcedeath.Play();
+                    }
+                }
+            }
+        }
+    }
 }

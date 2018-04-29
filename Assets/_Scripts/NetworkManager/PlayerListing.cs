@@ -14,23 +14,23 @@ public class PlayerListing : MonoBehaviour
         get { return _playerName; }
     }
 
-    /*[SerializeField]
+    [SerializeField]
     private Text _playerPing;
     private Text m_playerPing
     {
         get { return _playerPing; }
-    }*/
+    }
 
     public void ApplyPhotonPlayer(PhotonPlayer photonPlayer)
     {
-        //PhotonPlayer = photonPlayer;
+        PhotonPlayer = photonPlayer;
         PlayerName.text = photonPlayer.NickName;
 
-       // StartCoroutine(C_ShowPing());
+        StartCoroutine(C_ShowPing());
     }
 
 
-   /* private IEnumerator C_ShowPing()
+    private IEnumerator C_ShowPing()
     {
         while (PhotonNetwork.connected)
         {
@@ -40,6 +40,5 @@ public class PlayerListing : MonoBehaviour
         }
 
         yield break;
-    }*/
-
+    }
 }

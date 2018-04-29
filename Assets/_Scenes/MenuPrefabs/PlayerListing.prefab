@@ -60,6 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerName: {fileID: 114818792552591628}
+  _playerPing: {fileID: 0}
 --- !u!114 &114559648384516550
 MonoBehaviour:
   m_ObjectHideFlags: 1

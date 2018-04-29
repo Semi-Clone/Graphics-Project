@@ -28,10 +28,10 @@ public class PlayerLayoutGroup : MonoBehaviour
     //Called by photon whenever you join a room.
     private void OnJoinedRoom()
     {
-        // foreach (Transform child in transform)
-        // {
-        //     Destroy(child.gameObject);
-        // }
+         foreach (Transform child in transform)
+         {
+             Destroy(child.gameObject);
+         }
 
          MainCanvasManager.Instance.CurrentRoomCanvas.transform.SetAsLastSibling();
 
